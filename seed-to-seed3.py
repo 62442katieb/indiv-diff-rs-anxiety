@@ -85,16 +85,10 @@ def betweenness_wei(G):
 
     return BC
 
-#Yeo_atlas = datasets.fetch_atlas_yeo_2011(data_dir='/home/kbott006/nilearn_data', url=None, resume=True, verbose=1)
+laird_2011_icns = '/home/data/nbc/SeedToSeed/17-networks-combo-ccn-5.14.nii.gz'
 
-atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
-atlas_yeo = atlas_yeo_2011.thick_7
-
-#region_labels = regions.connected_label_regions(atlas_yeo)
-#region_labels.to_filename('/scratch/kbott/salience-anxiety/relabeled_yeo_atlas.nii.gz')
-
-network_masker = input_data.NiftiLabelsMasker(atlas_yeo, standardize=True)
-region_masker = input_data.NiftiLabelsMasker('/scratch/kbott/salience-anxiety/relabeled_yeo_atlas7.nii.gz', standardize=True)
+network_masker = input_data.NiftiLabelsMasker(laird_2011_icns, standardize=True)
+#region_masker = input_data.NiftiLabelsMasker('/scratch/kbott/salience-anxiety/relabeled_yeo_atlas7.nii.gz', standardize=True)
 
 subjects = ['101', '102', '103', '104', '106', '107', '108', '110', '212', '213',
             '214', '215', '216', '217', '218', '219', '320', '321', '322', '323',
@@ -137,22 +131,16 @@ for s in subjects:
         confounds = join(data_dir, s, 'session-0', 'resting-state', 'resting-state-0', 'endor1.feat', 'mc', 'prefiltered_func_data_mcf.par')
 
     network_time_series = network_masker.fit_transform (fmri_file, confounds)
-    region_time_series = region_masker.fit_transform (fmri_file, confounds)
+    #region_time_series = region_masker.fit_transform (fmri_file, confounds)
     correlation_measure = ConnectivityMeasure(kind='correlation')
-    #labels = ['VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA', 'SalVentAttnB', 'LimbicA', 'LimbicB', 'ContC', 'ContA', 'ContB', 'DefaultD', 'DefaultC', 'DefaultA', 'DefaultB']
     network_correlation_matrix = correlation_measure.fit_transform([network_time_series])[0]
-    region_correlation_matrix = correlation_measure.fit_transform([region_time_series])[0]
-    np.savetxt(join(sink_dir, s, '{0}_region_corrmat_Yeo7.csv'.format(s)), region_correlation_matrix, delimiter=",")
-    #labeled_netwk_corrmat = np.hstack((labels, network_correlation_matrix))
-    #labels_plus = [' ', 'VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA', 'SalVentAttnB', 'LimbicA', 'LimbicB', 'ContC', 'ContA', 'ContB', 'DefaultD', 'DefaultC', 'DefaultA', 'DefaultB']
-    #labeled_netwk_corrmat = np.vstack((labels_plus, labeled_netwk_corrmat))
-    np.savetxt(join(sink_dir, s, '{0}_network_corrmat_Yeo7.csv'.format(s)), network_correlation_matrix, delimiter=",")
+    np.savetxt(join(sink_dir, s, '{0}_network_corrmat_Laird2011.csv'.format(s)), network_correlation_matrix, delimiter=",")
 
     network = {}
-    region = {}
+    #region = {}
     network_wise = {}
-    region_wise = {}
-    
+    #region_wise = {}
+
     #talking with Kim:
     #start threhsolding (least conservative) at the lowest threshold where you lose your negative connection weights
     #steps of 5 or 10 percent
@@ -165,86 +153,20 @@ for s in subjects:
     for p in np.arange(0.1, 1, 0.1):
         ntwk = []
         ntwk_wise = []
-        regn = []
-        regn_wise = []
+
         ntwk_corrmat_thresh = bct.threshold_proportional(network_correlation_matrix, p, copy=True)
-        regn_corrmat_thresh = bct.threshold_proportional(region_correlation_matrix, p, copy=True)
         #network measures of interest here
-        #betweenness centrality
-        l = bct.weight_conversion(regn_corrmat_thresh, 'lengths')
-        bc = betweenness_wei(l)
-        regn_wise.append(bc)
-
-        l = bct.weight_conversion(ntwk_corrmat_thresh, 'lengths')
-        bc = betweenness_wei(l)
-        ntwk_wise.append(bc)
-
-        #node degree
-        deg = bct.degrees_und(regn_corrmat_thresh)
-        regn_wise.append(deg)
-
-        deg = bct.degrees_und(ntwk_corrmat_thresh)
-        ntwk_wise.append(deg)
-
-        #node strength
-        [Spos, Sneg, vpos, vneg] = bct.strengths_und_sign(regn_corrmat_thresh)
-        #nodal strength of positive weights
-        regn_wise.append(Spos)
-        #nodal strength of negative weights
-        regn_wise.append(Sneg)
-        #total positive weight
-        regn.append(vpos)
-        #total negative weight
-        regn.append(vneg)
-
-        [Spos, Sneg, vpos, vneg] = bct.strengths_und_sign(ntwk_corrmat_thresh)
-        #nodal strength of positive weights
-        ntwk_wise.append(Spos)
-        #nodal strength of negative weights
-        ntwk_wise.append(Sneg)
-        #total positive weight
-        ntwk.append(vpos)
-        #total negative weight
-        ntwk.append(vneg)
 
         #global efficiency
-        le = bct.efficiency_wei(regn_corrmat_thresh)
-        regn.append(le)
-
         le = bct.efficiency_wei(ntwk_corrmat_thresh)
         ntwk.append(le)
 
-        #path length
-        [pl, gl_eff, ecc, radius, diameter] = bct.charpath(regn_corrmat_thresh)
-        regn.append(pl)
-
-        [pl, gl_eff, ecc, radius, diameter] = bct.charpath(ntwk_corrmat_thresh)
-        ntwk.append(pl)
-
-        #modularity (for non-overlapping community structure)
-        [ci, q] = bct.modularity_louvain_und(regn_corrmat_thresh, gamma=1, hierarchy=False)
-        #modules = bct.ci2ls(ci)
-        #modules = np.asarray(modules)
-        regn_wise.append(ci)
-        regn.append(q)
-
-        [ci, q] = bct.modularity_louvain_und(ntwk_corrmat_thresh, gamma=1, hierarchy=False)
-        #modules = bct.ci2ls(ci)
-        #modules = np.asarray(modules)
-        ntwk_wise.append(ci)
-        ntwk.append(q)
-
         #clustering coefficient
-        c = bct.clustering_coef_wu(regn_corrmat_thresh)
-        regn_wise.append(c)
-
         c = bct.clustering_coef_wu(ntwk_corrmat_thresh)
         ntwk_wise.append(c)
 
         network[p] = ntwk
-        region[p] = regn
         network_wise[p] = ntwk_wise
-        region_wise[p] = regn_wise
 
     ntwk_df = pd.DataFrame(network).T
     ntwk_df.columns = ['total positive', 'total negative', 'efficiency', 'path length', 'modularity']
@@ -254,12 +176,3 @@ for s in subjects:
                                                        'community index', 'clustering coefficient']
     ntwk_df.to_csv(join(sink_dir, s, '{0}_network_metrics.csv'.format(s)), sep=',')
     ntwk_wise_df.to_csv(join(sink_dir, s, '{0}_network_wise_metrics.csv'.format(s)), sep=',')
-
-    regn_df = pd.DataFrame(region).T
-    regn_df.columns = ['total positive', 'total negative', 'efficiency', 'path length', 'modularity']
-
-    regn_wise_df = pd.DataFrame(region_wise).T
-    regn_wise_df.columns = ['betweenness', 'degree', 'positive weights', 'negative weights',
-                                                       'community index', 'clustering coefficient']
-    regn_df.to_csv(join(sink_dir, s, '{0}_region_metrics.csv'.format(s)), sep=',')
-    regn_wise_df.to_csv(join(sink_dir, s, '{0}_region_wise_metrics.csv'.format(s)), sep=',')
