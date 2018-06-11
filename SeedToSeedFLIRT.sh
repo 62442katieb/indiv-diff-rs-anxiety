@@ -1,0 +1,2 @@
+flirt -in /home/data/nbc/physics-learning/data/pre-processed/101/session-0/resting-state/resting-state-0/endor1.feat/filtered_func_data.nii.gz -ref /home/applications/fsl/5.0.8/data/standard/MNI152_T1_2mm_brain.nii.gz -applyxfm -init /home/data/nbc/physics-learning/data/pre-processed/101/session-0/resting-state/resting-state-0/endor1.feat/reg/example_func2standard.mat -out /home/ariegonz/SeedToSeed/101_filtered_func_data_mni.nii.gz
+
