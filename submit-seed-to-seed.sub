@@ -26,4 +26,4 @@ module load gsl-blas/1.15
 ##########################################################
 ##########################################################
 
-python seed-to-seed-prepost.py
+python seed-to-seed-prepost-yeo.py
