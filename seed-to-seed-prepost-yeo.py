@@ -73,6 +73,7 @@ for session in sessions:
 df = pd.DataFrame(columns=colnames)
 
 for s in subjects:
+    ntwkconns = {}
     for i in np.arange(0, (len(sessions))):
         if not exists(join(sink_dir, sessions[i], s)):
             makedirs(join(sink_dir, sessions[i], s))
@@ -113,12 +114,9 @@ for s in subjects:
         #df.at[s, 'van-fpn {0}'.format(sessions[i])] = ntwk_corrmat['Ventral Attention']['Frontoparietal']
         #df.at[s, 'fpn-dmn {0}'.format(sessions[i])] = ntwk_corrmat['Frontoparietal']['Default Mode']
 
-        ntwkconns = {}
         for ntwk1 in yeo_7_ntwk_labels:
             for ntwk2 in yeo_7_ntwk_labels:
                 ntwkconns['{0}, {1}: {2}'.format(ntwk1,ntwk2,sessions[i])] = ntwk_corrmat[ntwk1][ntwk2]
-        print ntwkconns
-        ntwkconnser = pd.Series(ntwkconns, name=s)
-        print ntwkconnser
+    ntwkconnser = pd.Series(ntwkconns, name=s)
     df = df.append(ntwkconnser)
 df.to_csv(join(sink_dir, 'out_yeo7_conn.csv'))
