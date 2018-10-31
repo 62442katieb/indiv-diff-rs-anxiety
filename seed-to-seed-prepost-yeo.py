@@ -27,7 +27,7 @@ subjects = ["101", "102", "103", "104", "106", "107", "108", "110", "212",
             "631", "633", "634"]
 
 
-subjects = ['102']
+#subjects = ['102']
 
 data_dir = '/home/data/nbc/physics-learning/data/pre-processed'
 pre_dir = '/home/data/nbc/anxiety-physics/pre'
